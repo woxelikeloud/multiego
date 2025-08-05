@@ -25,6 +25,7 @@ scene
 where `<scene>-camx.mp4` is the egocentric video of the performer x in the scene. If frame extraction is performed on all videos, it is recommended to reserve 25 GB of storage space.
 
 `intrinsic.txt` is the intrinsic matrix of the camera x, in the format as:
+
 $$
 \begin{bmatrix}
 f_x & 0 & c_x \\
@@ -32,13 +33,16 @@ f_x & 0 & c_x \\
 0 &  0  & 1
 \end{bmatrix}
 $$
+
 `camera_poses.txt` is the camera poses matrix of the frames in the `<scene>-camx.mp4`. The camera poses are represented as camera-to-world transformations in the world coordinate system. The pose in the format as:
+
 $$
 \begin{bmatrix}
 R  & t \\
 0  & 1
 \end{bmatrix}
 $$
+
 `sampletime.txt` is the capture time of the acquisition system. The data in `sampletime.txt` is in the unit of nano-second.
 
 The `sparse` directory contains COLMAP binary files for all images, including intrinsic camera parameters (`camera.bin`) and world-to-camera extrinsic transformations (`images.bin`). The `images.bin` file names follow the naming convention `camx_frame_00000.png`. Additionally, we provide sparse 3D point clouds reconstructed from the first frame's images and extensive images, stored in `points3D.bin` and `points3D.ply`.
