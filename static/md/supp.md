@@ -253,34 +253,45 @@ In the following part, we will explain the details of data annotation process. W
 ### Monocular Pose Tracking
 
 As described in Section 3.2 in the paper, each image frame and gyroscopic pose frame has its own timestamp, with image frames captured at 30Hz and gyroscopic pose frames at 50Hz. To align these data streams, we perform Spherical Linear Interpolation (SLERP) on the gyroscopic pose frames to obtain rotation data $\hat G_i$ corresponding to the exact capture times of the image frames. Specifically, let $q_0$ and $q_1$ denote the quaternions at times $t_0$ and $t_1$, respectively. The interpolated quaternion $q$ at time $t\in(t_0,t_1)$ is given by:
+
 $$
 q=q_0(q_0^{-1}q_1)^{\frac{t-t_0}{t_1-t_0}} 
 $$
 
 Then we employ several different image-based camera pose estimation methods to obtain multiple camera trajectories, in this paper we use [Anycam](https://fwmb.github.io/anycam/), [Mega-SAM](https://mega-sam.github.io/), [CUT3R](https://cut3r.github.io/), [MonST3R](https://monst3r-project.github.io/) and [PySLAM](https://github.com/luigifreda/pyslam). We let $P_{i,j}$ denote the $j$-th trajectory of $i$-th image frame sequence $X_i$, where the translation part is $t_{i,j}$ and the rotation part is $r_{i,j}$. It's notable that we . Subsequently, we fuse all the trajectories based on the rotation data $q$ obtained by SLERP. Specifically, we calculate the importance $m_j$ of $j$-th method based on the $L_1$ norms of the difference between $\hat G_i$ and $r_{i,j}$:
+
 $$
 m_j=\frac{1}{\sum_i^I\vert r_{i,j}^{-1}\hat G_i\vert/I} 
 $$
+
 where $I$ is the number of AR glasses. We obtain the weight $w_j$ of the $j$-th method based on $m_j$:
+
 $$
 w_j=\frac{m_j}{\sum^n_Jm_n} 
 $$
+
 After the calculation above, a normalized monocular camera trajectory $\bar P_i$ of the $i$-th AR glasses is given by:
+
 $$
 \bar P_i = (\sum^J_j w_j\cdot\frac{t_{i,j}}{\Vert t_{i,j,max} \Vert}, \frac{\sum^J_j w_j\cdot r_{i,j}}{\Vert \sum^J_j w_j\cdot r_{i,j} \Vert})  
 $$
+
 where $\sum^J_j w_j\cdot\frac{t_{i,j}}{\Vert t_{i,j,max} \Vert}$ denotes the translation part, and $\frac{\sum^J_j w_j\cdot r_{i,j}}{\Vert \sum^J_j w_j\cdot r_{i,j} \Vert}$ denotes the rotation part. We abbreviate them as $\bar t_i$ and $\bar r_i$, respectively.
 
 ### Multi-camera Pose Synthesis
 
 Before data acquisition, we capture supplementary image sequence $X_s$ of the first frame static scene. We process the supplementary image sequence $X_s$ and the first frame of all the image frame sequence $X_i$ by SfM pipeline of COLMAP to reconstruction a static scene. In this scene, we obtain the absolute pose of different AR glasses at first frame $P_{i,0}$. Then we add the images in $X_i$ which have the max translation value, into the static scene to obtain the absolute pose of these images. We denote the displacement value between the first frame pose and the corresponding max translation pose as $\Delta t_{i,max}$. To scaling the normalized monocular trajectory $\bar P_i$ to the size of the static scene, we calculate a scale factor $s_i$:
+
 $$
 s_i=\frac{\Vert\Delta t_{i,max}\Vert}{\Vert\bar t_{i,max}\Vert} 
 $$
+
 Then, based on normalized monocular pose $\bar P_i$ and scale factor $s_i$, the absolute pose sequence of $i$-th view $P_i$ is given by:
+
 $$
 P_i=(t_{i,0}+s_i\cdot \bar t_i \cdot r_{i,0},\quad r_{i,0}\cdot \bar r_i) 
 $$
+
 where $t_{i,0}$ and $r_{i,0}$ denotes the translation and rotation of first frame pose, $t_{i,0}+s_i\cdot \bar t_i \cdot r_{i,0}$ and $r_{i,0}\cdot \bar r_i$ represent the translation and rotation of the final absolute pose.
 
 
